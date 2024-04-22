@@ -4,8 +4,6 @@ from loguru import logger
 import util
 
 
-#TODO: add details
-#TODO: add propper error handeling 
 
 
 class Person(ABC):
@@ -63,7 +61,7 @@ class Admin(Person):
             print("The specified bank does not exist.\nYou must first create the bank.")
             return None
         else:
-            if bank.branchPoolId == []:
+            if bank.branchIdPool == []:
                 print("There is no ID left to assign to a new branch.")
                 return None
             else:
@@ -119,6 +117,7 @@ class Account():
         print(f"\tNational ID: {self.owner}")
         print(f"\tAmmount: {self.ammount}")
         print(f"\tAccount ID: {self.accountId}")
+        print("\n\n")
         
         
 class Customer(Person):
@@ -128,16 +127,20 @@ class Customer(Person):
         self.accounts = {}
         self.loans = []
         self.store = store
+        self.nationalId = nationalId
+        
         
     def create_account(self,bankId,branchId):
         branch = self.store.banks.get(bankId).branches.get(branchId)
         accountSubId = branch.accountIdPool.pop()
         accountId = bankId + branchId + accountSubId
         account = Account(accountId=accountId,ammount=0,nationalId=self.nationalId)
-        self.accounts.append(account)
+        self.accounts[accountId]=account
         branch.accounts[accountId] = account
         print(f"Account Created with ID: {accountId}")
         account.show_details()
+        
+        return account
 
     def take_loan(self,ammount,accountId):
         branchId = accountId[2:4]
@@ -153,7 +156,7 @@ class Customer(Person):
     
     
     def deposit(self,accountId:str,ammount: int):
-        if accountId not in self.accounts.keys:
+        if accountId not in self.accounts.keys():
             print("You dont have such an account.")
             
         else:
@@ -162,7 +165,7 @@ class Customer(Person):
             print(f"Deposit to {accountId} owned by {account.owner} made.\nNew balance is: {account.ammount}")
     
     def withdraw(self,accountId:str,ammount: int):
-        if accountId not in self.accounts.keys:
+        if accountId not in self.accounts.keys():
             print("You dont have such an account.")
             
         else:
@@ -193,7 +196,7 @@ class Bank(Entity):
     def __init__(self,name:str,bankId:str) -> None:
         self.name = name
         self.bankId = bankId
-        self.branchPoolId = util.get_random_id_pool(2)
+        self.branchIdPool = util.get_random_id_pool(2)
         self.branches = {}
         
     def show_details(self):
