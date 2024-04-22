@@ -106,24 +106,73 @@ class Admin(Person):
             print("Deletion cancelled.")
             
             
-    def show_data(self):
-        pass
+    
         
-
-
+class Account():
+    def __init__(self,accountId:str,ammount:int,nationalId:str) -> None:
+        self.accountId = accountId
+        self.ammount = ammount
+        self.owner = nationalId
+    
+    def show_details(self):
+        print("\tAccount Details")
+        print(f"\tNational ID: {self.owner}")
+        print(f"\tAmmount: {self.ammount}")
+        print(f"\tAccount ID: {self.accountId}")
+        
+        
 class Customer(Person):
     def __init__(self, name: str, nationalId: str,address:str,store) -> None:
         super().__init__(name, nationalId)
         self.address = address
-        self.accounts = []
-        self.loans = {}
+        self.accounts = {}
+        self.loans = []
+        self.store = store
         
-    def take_loan(self,ammount,branchId):
-        if branchId in [account[2:4] for account in self.accounts]:
-            pass
+    def create_account(self,bankId,branchId):
+        branch = self.store.banks.get(bankId).branches.get(branchId)
+        accountSubId = branch.accountIdPool.pop()
+        accountId = bankId + branchId + accountSubId
+        account = Account(accountId=accountId,ammount=0,nationalId=self.nationalId)
+        self.accounts.append(account)
+        branch.accounts[accountId] = account
+        print(f"Account Created with ID: {accountId}")
+        account.show_details()
+
+    def take_loan(self,ammount,accountId):
+        branchId = accountId[2:4]
+        bankId = accountId[0:2]
+        
+        if branchId in [account[2:4] for account in self.accounts] and branchId not in self.loans:
+            if self.store.banks.get(bankId).branches.get(branchId).budget > ammount:
+                self.store.banks.get(bankId).branches.get(branchId).budget -= ammount
+                self.store.banks.get(bankId).branches.get(branchId).accounts.get(accountId[4:8]).ammount += ammount
+                self.loans.append(branchId)
         else:
             print("You dont have an account in the specifed branch")
-        
+    
+    
+    def deposit(self,accountId:str,ammount: int):
+        if accountId not in self.accounts.keys:
+            print("You dont have such an account.")
+            
+        else:
+            account = self.accounts[accountId]
+            account.ammount += ammount
+            print(f"Deposit to {accountId} owned by {account.owner} made.\nNew balance is: {account.ammount}")
+    
+    def withdraw(self,accountId:str,ammount: int):
+        if accountId not in self.accounts.keys:
+            print("You dont have such an account.")
+            
+        else:
+            account = self.accounts[accountId]
+            if account.ammount < ammount:
+                print("Inusfficent funds.")
+            else:
+                account.ammount -= ammount
+                print(f"Withdraw from {accountId} owned by {account.owner} made.\nNew balance is: {account.ammount}")
+                
     def show_details(self):
         print("\tCustomer Details")
         print(f"\tName: {self.name}")
@@ -172,7 +221,7 @@ class Branch(Entity):
         print(f"\tBranch ID: {self.branchId}")
         print(f"\tAccount Count: {len(self.accounts)}")
         
-        
+ 
         
         
         
