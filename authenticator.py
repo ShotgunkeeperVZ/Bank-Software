@@ -20,7 +20,8 @@ class TextAuthenticator(Authenticator):
         default = 'Banker1939'
         hashed = self.hasher(default)
         self.password_path = 'password.txt'
-        self.save_hash(self.password_path,hashed)
+        if not os.path.exists(self.password_path):
+            self.save_hash(self.password_path,hashed)
      
 
     def hasher(self,password: str):
@@ -49,7 +50,7 @@ class TextAuthenticator(Authenticator):
         return bcrypt.checkpw(password.encode('utf-8'), self.read_hash(self.password_path))
 
     def change_password(self,old_password: str, new_password: str):
-        if check_password(old_password):
+        if self.check_password(old_password):
             if os.path.exists(self.password_path):
                 try:
                     os.remove(self.password_path)
@@ -59,7 +60,7 @@ class TextAuthenticator(Authenticator):
             
             
             # save new pass
-            self.save_hash(self.password_path,hasher(new_password))    
+            self.save_hash(self.password_path,self.hasher(new_password)) 
+            return True   
         else:
-            print("wrong password")
-        
+            return False
